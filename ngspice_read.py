@@ -197,7 +197,7 @@ class ngspice_read(object):
         self.real = True
         self.vectors = []
 
-    def readfile(self,filename):
+    def readfile(self, filename):
         f = open(filename, "rb")
         t_offset = 0.0
         #with open(filename, "rb") as infile:
@@ -205,12 +205,13 @@ class ngspice_read(object):
         #inf = ab.decode('ISO-8859-1')
         while (1):
             line = f.readline().decode('ISO-8859-1')
+            print(line)
             if line == "":   ## EOF
                 return
 
             tok = [t.strip() for t in line.split(":",1)]
             keyword = tok[0].lower()  ## don't care the case of the keyword entry
-
+            print('KEYEWORD is: {}'.format(keyword))
             if keyword == "title":
                 self.current_plot.set_attributes(title=tok[1])
             elif keyword == "date":
@@ -232,6 +233,7 @@ class ngspice_read(object):
                         eprint('Warning: unknown flag: "' + flag + '"')
             elif keyword == "no. variables":
                 self.nvars = int(tok[1])
+                print('Number of variables = {}'.format(self.nvars))
             elif keyword == "no. points":
                 self.npoints = int(tok[1])
             elif keyword == "dimensions":
@@ -255,10 +257,12 @@ class ngspice_read(object):
             elif keyword == "variables":
                 for i in range(self.nvars):
                     line = f.readline().strip().split()
+
                     if len(line) >= 3:
                         number = int(line[0])
                         curr_vector = spice_vector(name=line[1].decode("utf-8"),
                                                    type=line[2].decode("utf-8"))
+                        print(line[2].decode("utf-8"))
                         self.vectors.append(curr_vector)
                         if len(line) > 3:
                             # eprint("Attributes: ", line[3:])
@@ -287,10 +291,10 @@ class ngspice_read(object):
                                              
                     aa = a.reshape(self.npoints,self.nvars)
                     self.vectors[0].set_data(aa[:,0] + t_offset)
-                    self.current_plot.set_scalevector(self.vectors[0])
+                    #self.current_plot.set_scalevector(self.vectors[0])
                     for n in range(1,self.nvars):
                         self.vectors[n].set_data(aa[:,n])
-                        self.current_plot.append_datavector(self.vectors[n])
+                        #self.current_plot.append_datavector(self.vectors[n])
                         
                 else: # complex data
                     if keyword == "values":
@@ -311,15 +315,17 @@ class ngspice_read(object):
                                              dtype="float64")
                     aa = a.reshape(self.npoints, self.nvars*2)
                     self.vectors[0].set_data(aa[:,0]) ## only the real part!
-                    self.current_plot.set_scalevector(self.vectors[0])
+                    #self.current_plot.set_scalevector(self.vectors[0])
                     for n in range(1,self.nvars):
                         self.vectors[n].set_data(numpy.array(aa[:,2*n]+
                                                              1j*aa[:,2*n+1]))
-                        self.current_plot.append_datavector(self.vectors[n])
+                        #self.current_plot.append_datavector(self.vectors[n])
                         
                 # create new plot after the data
-                self.plots.append(self.current_plot)
-                self.set_default_values()
+                #self.plots.append(self.current_plot)
+
+                #Removing this line.  Do not want to reset the variables, so that it can be used for later
+                #self.set_default_values()
 
             elif str.strip(keyword) == "": ## ignore empty lines
                 continue
@@ -329,8 +335,6 @@ class ngspice_read(object):
                       +line + '"\n')
                 #return 0
 
-    def get_plots(self):
-        return self.plots
 
 
 if __name__ == "__main__":
